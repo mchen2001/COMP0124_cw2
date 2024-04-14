@@ -65,16 +65,16 @@ class Game:
         else:
             self.config = {"easy": 1, "medium": 1, "hard": 4}
 
-        self.tasks = set()
+        self.tasks = []
         self.tasks_idx_map = {}
         idx = 0
         for task_type, count in self.config.items():
             for _ in range(count * self.volume_level):
                 task = Task(task_type, idx, self.gain)
                 self.tasks_idx_map[idx] = task
-                self.tasks.add(task)
+                self.tasks.append(task)
                 idx += 1
-        # random.shuffle(self.tasks)
+        random.shuffle(self.tasks)
 
     def get_task_by_idx(self, idx):
         return self.tasks_idx_map[idx]
@@ -83,8 +83,4 @@ class Game:
         return self.tasks
 
     def update_tasks(self):
-        completed_tasks = [task.idx for task in self.tasks if task.is_completed()]
-        print(f"Completed tasks before update: {completed_tasks}")
         self.tasks = [task for task in self.tasks if not task.is_completed()]
-        remaining_tasks = [task.idx for task in self.tasks]
-        print(f"Remaining tasks after update: {remaining_tasks}")
