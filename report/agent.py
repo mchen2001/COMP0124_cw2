@@ -1,4 +1,9 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
 import random
+from collections import deque
 
 
 class Agent:
@@ -31,7 +36,7 @@ class Agent:
     #     # Assuming the agent has an attribute that tracks available task indices
     #     self.available_task_indices = [task.idx for task in available_tasks]
 
-    def action(self):
+    def act(self):
         pass
 
     def __eq__(self, other):
@@ -48,7 +53,7 @@ class RandomAgent(Agent):
     def __init__(self, idx, tasks):
         super().__init__(idx, tasks)
 
-    def action(self):
+    def act(self):
         print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
         if not self.available_tasks:
             return None
@@ -69,7 +74,7 @@ class AdaptiveAgent(Agent):
         for agent in agents:
             self.other_agents_rewards[agent] = 0
 
-    def action(self):
+    def act(self):
         print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
         if not self.available_tasks:
             return None
@@ -116,3 +121,77 @@ class AdaptiveAgent(Agent):
         # print(self.other_agents_rewards)
         for agent in other_agent_reward_dict:
             self.other_agents_rewards[agent] += other_agent_reward_dict[agent]
+
+
+class DQN(nn.Module):
+    def __init__(self, input_size, output_size, hidden_size=64):
+        super(DQN, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, output_size)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+class DQNAgent:
+    def __init__(self, idx, tasks, state_size, action_size, hidden_size=64, gamma=0.99, epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995, learning_rate=0.001, batch_size=20, memory_size=10000):
+        self.idx = idx
+        self.available_tasks = set(tasks)
+        self.state_size = state_size
+        self.action_size = action_size
+        self.memory = deque(maxlen=memory_size)
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
+        self.batch_size = batch_size
+        self.model = DQN(state_size, action_size)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
+        self.reward = 0
+
+    def remember(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
+
+    def act(self):
+        if np.random.rand() <= self.epsilon:
+            chosen_task = random.choice(list(self.available_tasks))
+        else:
+            state = [task.prob for task in self.available_tasks]  # Collecting state information
+            state = torch.FloatTensor(state).unsqueeze(0)
+            act_values = self.model(state)
+            chosen_task = list(self.available_tasks)[torch.argmax(act_values).item()]
+        
+        self.available_tasks.remove(chosen_task)  # Ensure the chosen task is removed
+        return chosen_task
+
+    def update_reward(self, payoff):
+        """Update the total reward for the agent."""
+        self.reward += payoff
+        
+    def replay(self):
+        if len(self.memory) < self.batch_size:
+            return
+        minibatch = random.sample(self.memory, self.batch_size)
+        states, actions, rewards, next_states, dones = zip(*minibatch)
+        states = torch.FloatTensor(states)
+        next_states = torch.FloatTensor(next_states)
+        actions = torch.LongTensor(actions)
+        rewards = torch.FloatTensor(rewards)
+        dones = torch.FloatTensor(dones)
+
+        Q_expected = self.model(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+        Q_targets_next = self.model(next_states).detach().max(1)[0]
+        Q_targets = rewards + (self.gamma * Q_targets_next * (1 - dones))
+
+        loss = nn.MSELoss()(Q_expected, Q_targets)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
+
+    def update_tasks(self, tasks):
+        self.available_tasks = set(tasks)

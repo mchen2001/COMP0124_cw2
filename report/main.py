@@ -1,5 +1,10 @@
-from env import *
+from env import Env
 
-env = Env('basic', 3, ['random', 'adaptive', 'random'])
-rewards, actions = env.simulate_game()
-print(rewards, actions)
+def main():
+    env = Env('intermediate', 2, ['random', 'adaptive', 'dqn'])
+    rewards, actions = env.simulate_game()
+    print("Rewards:", rewards)
+    print("Actions:", actions)
+
+if __name__ == '__main__':
+    main()
