@@ -15,26 +15,12 @@ class Agent:
     def update_tasks(self, tasks):
         agent_tasks = self.available_tasks.copy()
         self.available_tasks = agent_tasks & set(tasks)
-        # print("!!!:", agent_tasks)
-        # idx = [task.idx for task in tasks]
-        # self.available_tasks = set([task for task in agent_tasks if task.idx in idx])
-
-    # def remove_task(self, task):
-    #     for t in self.available_tasks:
-    #         if t.idx == task.idx:
-    #             self.available_tasks.remove(t)
-    # self.available_tasks.remove(task)
-    # return self.available_tasks
 
     def get_available_task(self):
         return self.available_tasks
 
     def update_reward(self, payoff):
         self.reward += payoff
-
-    # def update_available_tasks(self, available_tasks):
-    #     # Assuming the agent has an attribute that tracks available task indices
-    #     self.available_task_indices = [task.idx for task in available_tasks]
 
     def act(self):
         pass
@@ -57,12 +43,9 @@ class RandomAgent(Agent):
         print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
         if not self.available_tasks:
             return None
-        a = random.choice(list(self.available_tasks))
-        self.available_tasks.remove(a)
-        print(f"agent {self.idx} chooses task {a.idx}")
-        # print("1:", a.idx)
-        # print("2:", [t.idx for t in self.available_tasks])
-        return a
+        chosen_task = random.choice(list(self.available_tasks))
+        print(f"agent {self.idx} chooses task {chosen_task.idx}")
+        return chosen_task
 
 
 class AdaptiveAgent(Agent):
@@ -92,29 +75,32 @@ class AdaptiveAgent(Agent):
             else:
                 hard_tasks.append(task)
 
+        # Task choice logic remains the same
+        chosen_task = None  # Default to None
         if self.reward >= max(other_rewards):
             if easy_tasks:
-                a = random.choice(easy_tasks)
+                chosen_task = random.choice(easy_tasks)
             elif medium_tasks:
-                a = random.choice(medium_tasks)
+                chosen_task = random.choice(medium_tasks)
             else:
-                a = random.choice(hard_tasks)
+                chosen_task = random.choice(hard_tasks)
         elif self.reward <= min(other_rewards):
             if hard_tasks:
-                a = random.choice(hard_tasks)
+                chosen_task = random.choice(hard_tasks)
             elif medium_tasks:
-                a = random.choice(medium_tasks)
+                chosen_task = random.choice(medium_tasks)
             else:
-                a = random.choice(easy_tasks)
+                chosen_task = random.choice(easy_tasks)
         else:
             if medium_tasks:
-                a = random.choice(medium_tasks)
+                chosen_task = random.choice(medium_tasks)
             else:
                 merged_tasks = easy_tasks + hard_tasks
-                a = random.choice(merged_tasks)
-        self.available_tasks.remove(a)
-        print(f"agent {self.idx} chooses task {a.idx}")
-        return a
+                chosen_task = random.choice(merged_tasks)
+        # Do not remove the task here
+        print(f"agent {self.idx} chooses task {chosen_task.idx}")
+        return chosen_task
+        
 
     def record_other_rewards(self, other_agent_reward_dict: dict):
         """ record other agents' reward """
@@ -155,6 +141,7 @@ class DQNAgent:
         self.memory.append((state, action, reward, next_state, done))
 
     def act(self):
+        print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
         if np.random.rand() <= self.epsilon:
             chosen_task = random.choice(list(self.available_tasks))
         else:
@@ -164,6 +151,7 @@ class DQNAgent:
             chosen_task = list(self.available_tasks)[torch.argmax(act_values).item()]
         
         self.available_tasks.remove(chosen_task)  # Ensure the chosen task is removed
+        print(f"agent {self.idx} chooses task {chosen_task.idx}")
         return chosen_task
 
     def update_reward(self, payoff):

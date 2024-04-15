@@ -35,42 +35,44 @@ class Env:
 
     def step(self, agent_actions):
         task_agent = {}
-        for agent in agent_actions:
-            if agent_actions[agent].idx not in task_agent:
-                task_agent[agent_actions[agent].idx] = [agent]
+        for agent, task in agent_actions.items():
+            task_idx = task.idx
+            if task_idx not in task_agent:
+                task_agent[task_idx] = [agent]
             else:
-                task_agent[agent_actions[agent].idx].append(agent)
+                task_agent[task_idx].append(agent)
 
-        agent_reward = {}
-        for idx in task_agent:
+        agent_reward = {agent.idx: agent.reward for agent in self.agents}  # Initialize rewards from current agent state
+
+        for idx, agents in task_agent.items():
             task = self.game.get_task_by_idx(idx)
             payoff = task.do_task()
-            agent = random.choice(task_agent[idx])
+
             if payoff == 0:
-                # print(task.idx)
-                # print([t.idx for t in agent.available_tasks])
-                print(f"Task {task.idx} not completed by agent {agent.idx}")
-                # agent.remove_task(task)
+                for agent in agents:
+                    print(f"Task {task.idx} not completed by agent {agent.idx}")
             else:
+                # Randomly select an agent who attempted the task to receive the reward
+                agent = random.choice(agents)
                 agent.update_reward(payoff)
-                agent_reward[agent.idx] = payoff
-                print(f"Task {task.idx} completed by agent {agent.idx}")
+                agent_reward[agent.idx] += payoff
+                print(f"Task {task.idx} completed by agent {agent.idx}, Reward: {payoff}")
                 task.done = True
 
         self.game.update_tasks()
+
         for agent in self.agents:
-            if isinstance(agent, AdaptiveAgent):
-                agent.record_other_rewards(agent_reward)
-            agent.update_tasks(self.game.tasks)
-            # agent.available_tasks = list(set(agent.available_tasks) & set(self.game.tasks))
-        # for agent in self.agents:
-        #     agent.update_available_tasks(self.game.get_game_tasks())
+            agent.update_tasks([task for task in self.game.get_game_tasks()])
+
+        return agent_reward
+
 
     def simulate_game(self):
         self.reset()
-        print("agents:", [agent.idx for agent in self.agents])
+        print("Agents:", [agent.idx for agent in self.agents])
         action_history = {agent.idx: [] for agent in self.agents}
-        agent_reward = {agent.idx: [0] for agent in self.agents}
+        cumulative_rewards = {agent.idx: 0 for agent in self.agents}  # Initialize cumulative rewards to zero
+
         while any(not task.is_completed() for task in self.game.get_game_tasks()):
             print(f"Tasks: {[task.idx for task in self.game.get_game_tasks() if not task.is_completed()]}")
             agent_actions = {}
@@ -79,7 +81,8 @@ class Env:
                 if task:
                     agent_actions[agent] = task
 
-            for agent, task in agent_actions.items():
+            for agent in agent_actions:
+                task = agent_actions[agent]
                 payoff = task.do_task()
                 if hasattr(agent, 'update_reward'):
                     agent.update_reward(payoff)
@@ -88,13 +91,16 @@ class Env:
                     print(f"Task {task.idx} completed by agent {agent.idx}")
                 else:
                     print(f"Task {task.idx} not completed by agent {agent.idx}")
+                cumulative_rewards[agent.idx] += payoff  # Update cumulative rewards
 
-            # Update tasks and rewards
+            # Print cumulative rewards after each round
+            print(f"Cumulative Rewards after this round: {cumulative_rewards}")
+
+            # Update tasks for the next round
             self.game.update_tasks()
             for agent in self.agents:
                 if hasattr(agent, 'update_tasks'):
                     agent.update_tasks(self.game.get_game_tasks())
 
-        return agent_reward, action_history
-
+        return cumulative_rewards, action_history
 
