@@ -30,6 +30,10 @@ class Env:
                 # Initialize DQN agent with the size of the game's tasks and actions
                 agent = DQNAgent(idx, tasks, len(tasks), 3)  # Assuming three types of tasks
                 self.agents.append(agent)
+            elif agent_type == 'ppo':
+                agent = PPOAgent(idx, tasks)
+                self.agents.append(agent)
+
             else:
                 raise Exception("Unknown agent type")
 
@@ -66,7 +70,6 @@ class Env:
 
         return agent_reward
 
-
     def simulate_game(self):
         self.reset()
         print("Agents:", [agent.idx for agent in self.agents])
@@ -80,17 +83,30 @@ class Env:
                 task = agent.act()
                 if task:
                     agent_actions[agent] = task
+                    action_history[agent.idx].append(f"Task{task.idx}")
 
+            task_agent = {}
             for agent in agent_actions:
-                task = agent_actions[agent]
-                payoff = task.do_task()
-                if hasattr(agent, 'update_reward'):
-                    agent.update_reward(payoff)
-                action_history[agent.idx].append(f"Task {task.idx}")
-                if task.is_completed():
-                    print(f"Task {task.idx} completed by agent {agent.idx}")
+                if agent_actions[agent].idx not in task_agent:
+                    task_agent[agent_actions[agent].idx] = [agent]
                 else:
+                    task_agent[agent_actions[agent].idx].append(agent)
+
+            agent_reward = {}
+            for idx in task_agent:
+                task = self.game.get_task_by_idx(idx)
+                payoff = task.do_task()
+                agent = random.choice(task_agent[idx])
+                if payoff == 0:
+                    # print(task.idx)
+                    # print([t.idx for t in agent.available_tasks])
                     print(f"Task {task.idx} not completed by agent {agent.idx}")
+                    # agent.remove_task(task)
+                else:
+                    agent.update_reward(payoff)
+                    agent_reward[agent.idx] = payoff
+                    print(f"Task {task.idx} completed by agent {agent.idx}")
+                    task.done = True
                 cumulative_rewards[agent.idx] += payoff  # Update cumulative rewards
 
             # Print cumulative rewards after each round
@@ -103,4 +119,3 @@ class Env:
                     agent.update_tasks(self.game.get_game_tasks())
 
         return cumulative_rewards, action_history
-
