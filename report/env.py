@@ -37,82 +37,41 @@ class Env:
             else:
                 raise Exception("Unknown agent type")
 
-    def step(self, agent_actions):
-        task_agent = {}
-        for agent, task in agent_actions.items():
-            task_idx = task.idx
-            if task_idx not in task_agent:
-                task_agent[task_idx] = [agent]
-            else:
-                task_agent[task_idx].append(agent)
 
-        agent_reward = {agent.idx: agent.reward for agent in self.agents}  # Initialize rewards from current agent state
 
-        for idx, agents in task_agent.items():
-            task = self.game.get_task_by_idx(idx)
-            payoff = task.do_task()
-
-            if payoff == 0:
-                for agent in agents:
-                    print(f"Task {task.idx} not completed by agent {agent.idx}")
-            else:
-                # Randomly select an agent who attempted the task to receive the reward
-                agent = random.choice(agents)
-                agent.update_reward(payoff)
-                agent_reward[agent.idx] += payoff
-                print(f"Task {task.idx} completed by agent {agent.idx}, Reward: {payoff}")
-                task.done = True
-
-        self.game.update_tasks()
-
-        for agent in self.agents:
-            agent.update_tasks([task for task in self.game.get_game_tasks()])
-
-        return agent_reward
 
     def simulate_game(self):
         self.reset()
         print("Agents:", [agent.idx for agent in self.agents])
         action_history = {agent.idx: [] for agent in self.agents}
-        cumulative_rewards = {agent.idx: 0 for agent in self.agents}  # Initialize cumulative rewards to zero
+        cumulative_rewards = {agent.idx: 0 for agent in self.agents}
 
         while any(not task.is_completed() for task in self.game.get_game_tasks()):
-            print(f"Tasks: {[task.idx for task in self.game.get_game_tasks() if not task.is_completed()]}")
-            agent_actions = {}
+            print(f"Tasks available: {[task.idx for task in self.game.get_game_tasks() if not task.is_completed()]}")
+            task_agent_map = {}
             for agent in self.agents:
                 task = agent.act()
                 if task:
-                    agent_actions[agent] = task
+                    if task.idx not in task_agent_map:
+                        task_agent_map[task.idx] = []
+                    task_agent_map[task.idx].append(agent)
                     action_history[agent.idx].append(f"Task{task.idx}")
 
-            task_agent = {}
-            for agent in agent_actions:
-                if agent_actions[agent].idx not in task_agent:
-                    task_agent[agent_actions[agent].idx] = [agent]
-                else:
-                    task_agent[agent_actions[agent].idx].append(agent)
-
-            agent_reward = {}
-            for idx in task_agent:
-                task = self.game.get_task_by_idx(idx)
+            for task_idx, agents in task_agent_map.items():
+                task = self.game.get_task_by_idx(task_idx)
                 payoff = task.do_task()
-                agent = random.choice(task_agent[idx])
-                if payoff == 0:
-                    # print(task.idx)
-                    # print([t.idx for t in agent.available_tasks])
-                    print(f"Task {task.idx} not completed by agent {agent.idx}")
-                    # agent.remove_task(task)
-                else:
-                    agent.update_reward(payoff)
-                    agent_reward[agent.idx] = payoff
-                    print(f"Task {task.idx} completed by agent {agent.idx}")
+                if payoff > 0:
+                    for agent in agents:
+                        agent.update_reward(payoff)
+                        cumulative_rewards[agent.idx] += payoff
+                        print(f"Task {task_idx} completed by agent {agent.idx}, Reward: {payoff}")
                     task.done = True
-                cumulative_rewards[agent.idx] += payoff  # Update cumulative rewards
-
-            # Print cumulative rewards after each round
-            print(f"Cumulative Rewards after this round: {cumulative_rewards}")
+                else:
+                    for agent in agents:
+                        print(f"Task {task_idx} not completed by agent {agent.idx}")
 
             # Update tasks for the next round
+            print(f"Cumulative Rewards after this round: {cumulative_rewards}")
             self.game.update_tasks()
             for agent in self.agents:
                 if hasattr(agent, 'update_tasks'):

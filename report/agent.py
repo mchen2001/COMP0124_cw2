@@ -56,7 +56,7 @@ class RandomAgent(Agent):
         super().__init__(idx, tasks)
 
     def act(self):
-        print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
+        # print(f"available task: {[t.idx for t in self.available_tasks]}")
         if not self.available_tasks:
             return None
         chosen_task = random.choice(list(self.available_tasks))
@@ -74,7 +74,7 @@ class AdaptiveAgent(Agent):
             self.other_agents_rewards[agent] = 0
 
     def act(self):
-        print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
+        # print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
         if not self.available_tasks:
             return None
         other_rewards = list(self.other_agents_rewards.values())
@@ -150,7 +150,7 @@ class DQNAgent(Agent):
         self.memory.append((state, action, reward, next_state, done))
 
     def act(self):
-        print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
+        # print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
         if np.random.rand() >= self.epsilon:
             chosen_task = random.choice(list(self.available_tasks))
         else:
@@ -256,6 +256,7 @@ class PPOAgent(Agent):
                                    if task.get_task_type() == selected_task_type]
         if available_tasks_of_type:
             chosen_task = random.choice(available_tasks_of_type)
+            print(f"agent {self.idx} chooses task {chosen_task.idx}")
             return chosen_task
         else:
             return None
