@@ -60,7 +60,7 @@ class RandomAgent(Agent):
         if not self.available_tasks:
             return None
         chosen_task = random.choice(list(self.available_tasks))
-        print(f"agent {self.idx} chooses task {chosen_task.idx}")
+        print(f"Random chooses task {chosen_task.idx}")
         return chosen_task
 
 
@@ -104,7 +104,7 @@ class AdaptiveAgent(Agent):
                 merged_tasks = easy_tasks + hard_tasks
                 chosen_task = random.choice(merged_tasks)
         # Do not remove the task here
-        print(f"agent {self.idx} chooses task {chosen_task.idx}")
+        print(f"Adaptive chooses task {chosen_task.idx}")
         return chosen_task
 
     def record_other_rewards(self, other_agent_reward_dict: dict):
@@ -175,7 +175,7 @@ class DQNAgent(Agent):
                     break
 
         # self.available_tasks.remove(chosen_task)  # Ensure the chosen task is removed
-        print(f"agent {self.idx} chooses task {chosen_task.idx}")
+        print(f"DQN chooses task {chosen_task.idx}")
         return chosen_task
 
     def get_state(self):
@@ -274,9 +274,9 @@ class PPOAgent(Agent):
                 chosen_task = None
         
         if chosen_task:
-            print(f"agent {self.idx} chooses task {chosen_task.idx}")
+            print(f"PPO chooses task {chosen_task.idx}")
         else:
-            print(f"agent {self.idx} finds no available tasks to choose.")
+            print(f"PPO finds no available tasks to choose.")
 
         return chosen_task
 

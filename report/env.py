@@ -69,7 +69,8 @@ class Env:
 
     def simulate_game(self):
         self.reset()
-        print("Agents:", [agent.idx for agent in self.agents])
+        agent_types = ['Random', 'Adaptive', 'DQN', 'PPO']  # Adjust this list according to the order in `agent_list`
+        print("Agents:", {idx: f"{type}" for idx, type in enumerate(agent_types)})
         action_history = {agent.idx: [] for agent in self.agents}
         cumulative_rewards = {agent.idx: 0 for agent in self.agents}
 
@@ -91,17 +92,17 @@ class Env:
                     for agent in agents:
                         agent.update_reward(payoff)
                         cumulative_rewards[agent.idx] += payoff
-                        print(f"Task {task_idx} completed by agent {agent.idx}, Reward: {payoff}")
-                    task.done = True
+                        print(f"Task {task_idx} completed by {agent_types[agent.idx]}, Reward: {payoff}")
                 else:
                     for agent in agents:
-                        print(f"Task {task_idx} not completed by agent {agent.idx}")
+                        print(f"Task {task_idx} not completed by {agent_types[agent.idx]}")
 
-            # Update tasks for the next round
-            print(f"Cumulative Rewards after this round: {cumulative_rewards}")
+            rewards_by_name = {agent_types[agent.idx]: cumulative_rewards[agent.idx] for agent in self.agents}
+            print(f"Cumulative Rewards after this round: {rewards_by_name}")
             self.game.update_tasks()
             for agent in self.agents:
                 if hasattr(agent, 'update_tasks'):
                     agent.update_tasks(self.game.get_game_tasks())
 
-        return cumulative_rewards, action_history
+        final_rewards_by_name = {agent_types[agent.idx]: cumulative_rewards[agent.idx] for agent in self.agents}
+        return final_rewards_by_name, action_history
