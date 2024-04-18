@@ -154,14 +154,7 @@ class DQNAgent(Agent):
         if np.random.rand() >= self.epsilon:
             chosen_task = random.choice(list(self.available_tasks))
         else:
-            state_map = {"easy": 1,
-                         "medium": 2,
-                         "hard": 3}
-            state = torch.zeros(self.state_size)
-            for task in self.available_tasks:
-                state_map[task.idx] = state_map[task.type]
-            # state = [task.prob for task in self.available_tasks]  # Collecting state information
-            state = torch.FloatTensor(state).unsqueeze(0)
+            state = self.get_state()
             chosen_type_map = {0: "easy",
                                1: "medium",
                                2: "hard"}
@@ -183,6 +176,17 @@ class DQNAgent(Agent):
         # self.available_tasks.remove(chosen_task)  # Ensure the chosen task is removed
         print(f"agent {self.idx} chooses task {chosen_task.idx}")
         return chosen_task
+
+    def get_state(self):
+        state_map = {"easy": 1,
+                     "medium": 2,
+                     "hard": 3}
+        state = torch.zeros(self.state_size)
+        for task in self.available_tasks:
+            state_map[task.idx] = state_map[task.type]
+        # state = [task.prob for task in self.available_tasks]  # Collecting state information
+        state = torch.FloatTensor(state).unsqueeze(0)
+        return state
 
     def replay(self):
         if len(self.memory) < self.batch_size:
