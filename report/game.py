@@ -22,6 +22,7 @@ class Task:
         self.gain = gain  # prob gain if any agent fail in this task
         self.prob = random.uniform(self.low, self.high)  # randomly select a prob
         self.done = False
+        
 
     def __eq__(self, other):
         if not isinstance(other, Task):
@@ -87,4 +88,4 @@ class Game:
         print(f"Completed tasks before update: {completed_tasks}")
         self.tasks = [task for task in self.tasks if not task.is_completed()]
         remaining_tasks = [task.idx for task in self.tasks]
-        print(f"Remaining tasks after update: {remaining_tasks}")
+        print(f"______________________________")
