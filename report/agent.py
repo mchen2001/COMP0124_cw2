@@ -5,10 +5,12 @@ import numpy as np
 import random
 from collections import deque
 from utils import *
+import os
 import math
 
 DQN_MODEL_PATH = "./save_model/dqn"
 PPO_MODEL_PATH = "./save_model/ppo"
+
 
 class Agent:
     def __init__(self, idx, tasks):
@@ -135,8 +137,8 @@ class DQN(nn.Module):
 
 
 class DQNAgent(Agent):
-    def __init__(self, idx, tasks, state_size, action_size, hidden_size=64, gamma=0.99, epsilon=0.95, epsilon_min=0.01,
-                 epsilon_decay=0.995, learning_rate=0.001, batch_size=20, memory_size=10000):
+    def __init__(self, idx, tasks, state_size=3, action_size=3, hidden_size=64, gamma=0.99, epsilon=0.95,
+                 epsilon_min=0.01,epsilon_decay=0.995, learning_rate=0.001, batch_size=20, memory_size=10000):
         super().__init__(idx, tasks)
         self.state_size = state_size
         self.action_size = action_size
@@ -147,6 +149,12 @@ class DQNAgent(Agent):
         self.epsilon_decay = epsilon_decay
         self.batch_size = batch_size
         self.model = DQN(state_size, action_size, hidden_size)
+        if os.path.exists(DQN_MODEL_PATH):
+            self.model.load_state_dict(torch.load(DQN_MODEL_PATH))
+        # if os.path.exists(DQN_MODEL_PATH):
+        #     self.model = torch.load(DQN_MODEL_PATH)
+        # else:
+        #     self.model = DQN(state_size, action_size, hidden_size)
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.reward = 0
 
@@ -182,14 +190,14 @@ class DQNAgent(Agent):
         return chosen_task
 
     def get_state(self):
-        state_map = {"easy": 1,
-                     "medium": 2,
-                     "hard": 3}
-        state = torch.zeros(self.state_size)
+        task_counts = {'easy': 0, 'medium': 0, 'hard': 0}
         for task in self.available_tasks:
-            state_map[task.idx] = state_map[task.type]
-        state = torch.FloatTensor(state).unsqueeze(0)
-        return state
+            task_type = task.get_task_type()
+            if task_type in task_counts:
+                task_counts[task_type] += 1
+
+        state_vector = [task_counts['easy'], task_counts['medium'], task_counts['hard']]
+        return torch.tensor(state_vector, dtype=torch.float32)
 
     def replay(self):
         if len(self.memory) < self.batch_size:
@@ -275,11 +283,10 @@ class PPOAgent(Agent):
                 chosen_task = random.choice(all_available_tasks)
             else:
                 chosen_task = None
-        
+
         if chosen_task:
             print_with_verbosity(f"PPO chooses task {chosen_task.idx}", verbose)
         else:
             print_with_verbosity(f"PPO finds no available tasks to choose.", verbose)
 
         return chosen_task
-

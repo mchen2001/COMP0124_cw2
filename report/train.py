@@ -9,12 +9,15 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 
 import numpy as np
+
 """
 TODOs:
 
 1. figure out why some loss values are None
 2. training loss doesn't seem to be reduced during training
 """
+
+
 # TODO:
 
 def train_dqn(episodes, min_task_volume, max_task_volume):
@@ -40,8 +43,8 @@ def train_dqn(episodes, min_task_volume, max_task_volume):
             task_type_map = {"easy": 0,
                              "medium": 1,
                              "hard": 2}
-            dqn_action_1 = dqn_agent_1.act()
-            dqn_action_2 = dqn_agent_2.act()
+            dqn_action_1 = dqn_agent_1.act(verbose=False)
+            dqn_action_2 = dqn_agent_2.act(verbose=False)
             agent_actions = {}
             if dqn_action_1:
                 agent_actions[dqn_agent_1] = dqn_action_1
@@ -93,14 +96,16 @@ def train_dqn(episodes, min_task_volume, max_task_volume):
 
             # Cumulative rewards (not shown in this snippet) can be tracked similarly to previous examples
 
-        torch.save(dqn_agent_1.model, DQN_MODEL_PATH)
+        torch.save(dqn_agent_1.model.state_dict(), DQN_MODEL_PATH)
         print(f"Episode {episode}: Completed with volumes set to {task_volume}.")
-        ls_1.append(np.mean(losses_1))
+        if losses_1:
+            ls_1.append(np.mean(losses_1))
         # ls_2.extend(losses_2)
     # print(ls_1)
     # torch.save(dqn_agent_1.model, )
     plt.plot(ls_1)
     plt.show()
 
+
 if __name__ == '__main__':
-    train_dqn(1000,1,20)
+    train_dqn(100, 1, 20)

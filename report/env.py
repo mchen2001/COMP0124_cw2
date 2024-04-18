@@ -29,7 +29,7 @@ class Env:
                 self.agents.append(RandomAgent(idx, tasks))
             elif agent_type == 'dqn':
                 # Initialize DQN agent with the size of the game's tasks and actions
-                agent = DQNAgent(idx, tasks, len(tasks), 3)  # Assuming three types of tasks
+                agent = DQNAgent(idx, tasks)  # Assuming three types of tasks
                 self.agents.append(agent)
             elif agent_type == 'ppo':
                 agent = PPOAgent(idx, tasks)
