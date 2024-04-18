@@ -256,10 +256,20 @@ class PPOAgent(Agent):
                                    if task.get_task_type() == selected_task_type]
         if available_tasks_of_type:
             chosen_task = random.choice(available_tasks_of_type)
-            print(f"agent {self.idx} chooses task {chosen_task.idx}")
-            return chosen_task
         else:
-            return None
+            # Fallback: choose from any available task if preferred type is not available
+            all_available_tasks = list(self.available_tasks)
+            if all_available_tasks:
+                chosen_task = random.choice(all_available_tasks)
+            else:
+                chosen_task = None
+        
+        if chosen_task:
+            print(f"agent {self.idx} chooses task {chosen_task.idx}")
+        else:
+            print(f"agent {self.idx} finds no available tasks to choose.")
+
+        return chosen_task
 
 #
 # class Node:
