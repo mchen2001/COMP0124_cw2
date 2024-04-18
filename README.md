@@ -13,9 +13,11 @@ Before running the project, ensure you have Python and pip installed on your sys
    git clone [URL_OF_YOUR_GITHUB_REPO]
 
 2. Navigate to the project directory:
+   ```sh
     cd [LOCAL_CLONED_REPO_NAME]
 
 3. Install the dependencies:
+   ```sh
     pip install -r requirements.txt
 
 ## Usage
