@@ -58,7 +58,7 @@ class Game:
         self.type = game_type
         self.gain = gain
         self.volume_level = volume_level
-
+        
         if game_type == "basic":
             self.config = {"easy": 4, "medium": 1, "hard": 1}
         elif game_type == "intermediate":
