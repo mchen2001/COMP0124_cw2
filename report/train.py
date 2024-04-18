@@ -8,17 +8,9 @@ from env import Env
 import matplotlib.pyplot as plt
 
 import torch
-import torch.nn.functional as F
 from torch.distributions import Categorical
 
 import numpy as np
-
-"""
-TODOs:
-
-1. figure out why some loss values are None
-2. training loss doesn't seem to be reduced during training
-"""
 
 
 def collect_data(num_of_data, min_task_volume, max_task_volume, epsilon=None):
@@ -125,7 +117,7 @@ def train_dqn_ppo(episodes, min_task_volume, max_task_volume, data_points):
     plt.ylabel('Loss')
     plt.title('Training Losses')
     plt.legend()
-    plt.show()
+    plt.savefig("./plots/training")
     return epsilon
 
 
@@ -201,90 +193,6 @@ def train_step_ppo(agent, data, clip_param=0.2, gamma=0.99):
     return actor_loss.item(), critic_loss.item()
 
 
-#
-# def train_dqn_ppo(episodes, min_task_volume, max_task_volume):
-#     ls_dqn = []
-#     ls_ppo = []
-#     for episode in range(episodes):
-#         losses_dqn = []
-#         losses_ppo = []
-#         task_volume = np.random.randint(min_task_volume, max_task_volume)
-#         game_type = random.choice(["basic", "intermediate", "hard"])
-#         env = Env(game_type, task_volume, ["dqn", "ppo"])
-#         dqn_agent = env.agents[0]
-#         ppo_agent = env.agents[1]
-#         assert isinstance(dqn_agent, DQNAgent)
-#         assert isinstance(ppo_agent, PPOAgent)
-#
-#         done = False
-#
-#         while not done:
-#             # Agents choose tasks and get rewards from their actions
-#             dqn_state = dqn_agent.get_state()
-#             ppo_state = ppo_agent.update_state()
-#             task_type_map = {"easy": 0,
-#                              "medium": 1,
-#                              "hard": 2}
-#             dqn_action = dqn_agent.act(verbose=False)
-#             ppo_action = ppo_agent.act(verbose=False)
-#             agent_actions = {}
-#             if dqn_action:
-#                 agent_actions[dqn_agent] = dqn_action
-#                 dqn_action = task_type_map[dqn_action.type]
-#
-#             if ppo_action:
-#                 agent_actions[ppo_agent] = ppo_action
-#                 ppo_action = task_type_map[ppo_action.type]
-#
-#             reward, done = env.step(agent_actions)
-#
-#             dqn_reward = reward[dqn_agent.idx]
-#             ppo_reward = reward[ppo_agent.idx]
-#
-#             dqn_next_state = dqn_agent.get_state()
-#             ppo_next_state = ppo_agent.update_state()
-#
-#             if dqn_action:
-#                 dqn_agent.remember(state=dqn_state,
-#                                    action=dqn_action,
-#                                    reward=dqn_reward,
-#                                    next_state=dqn_next_state,
-#                                    done=done)
-#
-#             if ppo_action:
-#                 ppo_agent.remember(state=ppo_state,
-#                                    action=ppo_action,
-#                                    reward=ppo_reward,
-#                                    next_state=ppo_next_state,
-#                                    done=done)
-#
-#             # Replay experiences to update DQN model
-#             # if len(dqn_agent.memory) >= dqn_agent.batch_size:
-#             loss_1 = dqn_agent.replay()
-#             # TODO: some losses are None
-#             if loss_1:
-#                 losses_dqn.append(loss_1)
-#
-#             loss_2 = ppo_agent.replay()
-#             if loss_2:
-#                 losses_ppo.append(loss_2)
-#
-#             # PPO update mechanism needs to be implemented here if applicable
-#             # Possibly ppo_agent.update_policy() or similar
-#
-#             # Cumulative rewards (not shown in this snippet) can be tracked similarly to previous examples
-#
-#         torch.save(dqn_agent.model.state_dict(), DQN_MODEL_PATH)
-#         print(f"Episode {episode}: Completed with volumes set to {task_volume}.")
-#         if losses_dqn:
-#             ls_dqn.append(np.mean(losses_dqn))
-#         # ls_2.extend(losses_2)
-#     # print(ls_1)
-#     # torch.save(dqn_agent_1.model, )
-#     plt.plot(ls_dqn)
-#     plt.show()
-
-
 if __name__ == '__main__':
-    epsilon = train_dqn_ppo(100, 1, 20, 100)
+    epsilon = train_dqn_ppo(1000, 1, 100, 100)
     print(f"best epsilon for DQN is: {epsilon}")
