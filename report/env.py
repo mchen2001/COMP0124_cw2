@@ -63,7 +63,8 @@ class Env:
             if hasattr(agent, 'update_tasks'):
                 agent.update_tasks(self.game.get_game_tasks())
 
-        return agent_reward
+        done = not any(not task.is_completed() for task in self.game.get_game_tasks())
+        return agent_reward, done
 
 
     def simulate_game(self):
