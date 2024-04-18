@@ -40,7 +40,7 @@ train.py: Script for training the DQN and PPO agents using the simulation data.
 
 utils.py: Helper functions and utilities used across the project.
 
-save_model/: Directory where trained models are saved for later use or evaluation.
+report/save_model: Directory where trained models are saved for later use or evaluation.
 
 ## Features
 
