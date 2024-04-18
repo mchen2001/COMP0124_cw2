@@ -10,11 +10,11 @@ Before running the project, ensure you have Python and pip installed on your sys
 
 1. Clone the repository:
    ```sh
-   git clone [URL_OF_YOUR_GITHUB_REPO]
+   git clone https://github.com/mchen2001/COMP0124_cw2.git
 
 2. Navigate to the project directory:
    ```sh
-    cd [LOCAL_CLONED_REPO_NAME]
+    cd COMP0124_cw2
 
 3. Install the dependencies:
    ```sh
