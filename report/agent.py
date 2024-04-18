@@ -127,7 +127,8 @@ class DQN(nn.Module):
         )
 
     def forward(self, x):
-        return self.net(x).flatten()
+        y = self.net(x)
+        return y
 
 
 class DQNAgent(Agent):
@@ -184,7 +185,6 @@ class DQNAgent(Agent):
         state = torch.zeros(self.state_size)
         for task in self.available_tasks:
             state_map[task.idx] = state_map[task.type]
-        # state = [task.prob for task in self.available_tasks]  # Collecting state information
         state = torch.FloatTensor(state).unsqueeze(0)
         return state
 
@@ -193,23 +193,28 @@ class DQNAgent(Agent):
             return
         minibatch = random.sample(self.memory, self.batch_size)
         states, actions, rewards, next_states, dones = zip(*minibatch)
-        states = torch.FloatTensor(states)
-        next_states = torch.FloatTensor(next_states)
+        states = torch.stack(states, dim=0)
+        next_states = torch.stack(next_states, dim=0)
         actions = torch.LongTensor(actions)
         rewards = torch.FloatTensor(rewards)
         dones = torch.FloatTensor(dones)
 
-        Q_expected = self.model(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+        output = self.model(states).squeeze(1)
+        actions = actions.unsqueeze(-1)
+        Q_expected = output.gather(1, actions).squeeze(1)
         Q_targets_next = self.model(next_states).detach().max(1)[0]
-        Q_targets = rewards + (self.gamma * Q_targets_next * (1 - dones))
+        Q_targets = rewards.unsqueeze(1) + (self.gamma * Q_targets_next * (1 - dones.unsqueeze(1)))
+        Q_targets_selected = Q_targets.gather(1, actions).squeeze(1)
+        loss = nn.MSELoss()(Q_expected, Q_targets_selected)
 
-        loss = nn.MSELoss()(Q_expected, Q_targets)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+
+        return loss.item()
 
 
 class PPONetwork(nn.Module):
@@ -274,3 +279,4 @@ class PPOAgent(Agent):
             print(f"PPO finds no available tasks to choose.")
 
         return chosen_task
+
