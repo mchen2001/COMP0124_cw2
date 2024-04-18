@@ -27,16 +27,25 @@ This will simulate a competitive game environment where agents interact based on
 ## Project Structure
 
 agent.py: Defines the agents with their strategies and learning mechanisms.
+
 env.py: Contains the environment setup where agents perform and interact.
+
 game.py: Implements the game logic, task definitions, and their management.
+
 main.py: The entry point of the program to run the simulations.
+
 train.py: Script for training the DQN and PPO agents using the simulation data.
+
 utils.py: Helper functions and utilities used across the project.
+
 save_model/: Directory where trained models are saved for later use or evaluation.
 
 ## Features
 
 Strategic Agents: Study and compare the behavior of different types of agents in a shared environment.
+
 Environment Simulation: A well-defined task environment that simulates competition among agents.
+
 Reinforcement Learning: Implementation of DQN and PPO agents, along with their training procedures.
+
 Performance Evaluation: Analysis of how different strategies affect the rewards and task allocation efficiency.
