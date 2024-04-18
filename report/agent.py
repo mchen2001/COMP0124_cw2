@@ -60,7 +60,7 @@ class RandomAgent(Agent):
         if not self.available_tasks:
             return None
         chosen_task = random.choice(list(self.available_tasks))
-        print(f"agent {self.idx} chooses task {chosen_task.idx}")
+        print(f"Random chooses task {chosen_task.idx}")
         return chosen_task
 
 
@@ -104,7 +104,7 @@ class AdaptiveAgent(Agent):
                 merged_tasks = easy_tasks + hard_tasks
                 chosen_task = random.choice(merged_tasks)
         # Do not remove the task here
-        print(f"agent {self.idx} chooses task {chosen_task.idx}")
+        print(f"Adaptive chooses task {chosen_task.idx}")
         return chosen_task
 
     def record_other_rewards(self, other_agent_reward_dict: dict):
@@ -174,7 +174,7 @@ class DQNAgent(Agent):
                     break
 
         # self.available_tasks.remove(chosen_task)  # Ensure the chosen task is removed
-        print(f"agent {self.idx} chooses task {chosen_task.idx}")
+        print(f"DQN chooses task {chosen_task.idx}")
         return chosen_task
 
     def get_state(self):
@@ -269,136 +269,8 @@ class PPOAgent(Agent):
                 chosen_task = None
         
         if chosen_task:
-            print(f"agent {self.idx} chooses task {chosen_task.idx}")
+            print(f"PPO chooses task {chosen_task.idx}")
         else:
-            print(f"agent {self.idx} finds no available tasks to choose.")
+            print(f"PPO finds no available tasks to choose.")
 
         return chosen_task
-
-#
-# class Node:
-#     def __init__(self, task, parent=None):
-#         self.task = task
-#         self.parent = parent
-#         self.children = {}
-#         self.visits = 0
-#         self.total_reward = 0
-#
-#     def add_child(self, task):
-#         if task not in self.children:
-#             self.children[task] = Node(task, parent=self)
-#
-#     def update_stats(self, reward):
-#         self.visits += 1
-#         self.total_reward += reward
-#
-#     def get_ucb1(self, exploration_constant=2):
-#         if self.visits == 0:
-#             return float('inf')  # Encourage exploration of unvisited nodes
-#         average_reward = self.total_reward / self.visits
-#         total_parent_visits = self.parent.visits if self.parent else 1
-#         return average_reward + exploration_constant * (2 * math.log(total_parent_visits) / self.visits) ** 0.5
-#
-#
-# class MCTSAgent(Agent):
-#     def __init__(self, idx, tasks, num_simulations=100):
-#         super().__init__(idx, tasks)
-#         self.num_simulations = num_simulations
-#         self.root = Node(None)  # Root node does not correspond to any task
-#
-#     def act(self):
-#         for _ in range(self.num_simulations):
-#             node = self.select(self.root)
-#             reward = self.rollout(node)
-#             self.backpropagate(node, reward)
-#
-#         best_task = max(self.root.children.items(), key=lambda child: child[1].visits)[0]
-#         return best_task
-#
-#     def select(self, node):
-#         # Select the best node using UCB1 until we reach a leaf node
-#         while node.children:
-#             node = max(node.children.values(), key=lambda n: n.get_ucb1())
-#         return node
-#
-#     def expand(self, node):
-#         # Expand the node with all possible tasks
-#         untried_tasks = self.available_tasks - set(node.children.keys())
-#         for task in untried_tasks:
-#             node.add_child(task)
-#
-#     def rollout(self, node):
-#         # Perform a simulation from the node to estimate the reward
-#         # Simplified version: assume a random reward from 0 to 1
-#         return random.uniform(0, 1)
-#
-#     def backpropagate(self, node, reward):
-#         # Update the node and all ancestors with the reward
-#         while node:
-#             node.update_stats(reward)
-#             node = node.parent
-#
-#
-#
-# # class Node:
-# #     def __init__(self, state, parent=None, action=None):
-# #         self.state = state
-# #         self.parent = parent
-# #         self.children = []
-# #         self.wins = 0
-# #         self.visits = 0
-# #         self.action = action
-# #         self.untried_actions = self.state.get_legal_actions()
-# #
-# #     def ucb1(self, total_visits):
-# #         if self.visits == 0:
-# #             return float('inf')  # Ensure unvisited nodes are selected
-# #         return (self.wins / self.visits) + 1.41 * sqrt(log(total_visits) / self.visits)
-# #
-# #     def select_child(self):
-# #         return max(self.children, key=lambda x: x.ucb1(self.visits))
-# #
-# #     def add_child(self, action, state):
-# #         child_node = Node(state=state, parent=self, action=action)
-# #         self.untried_actions.remove(action)
-# #         self.children.append(child_node)
-# #         return child_node
-# #
-# #     def update(self, result):
-# #         self.visits += 1
-# #         self.wins += result
-# #
-# #
-# # class MCTSAgent(Agent):
-# #     def __init__(self, idx, tasks, iterations=1000):
-# #         super(MCTSAgent, self).__init__(idx, tasks)
-# #         self.iterations = iterations
-# #
-# #     def act(self, state):
-# #         root_node = Node(state=state.clone())
-# #
-# #         for _ in range(self.iterations):
-# #             node = root_node
-# #             state = root_node.state.clone()
-# #
-# #             # Selection
-# #             while node.untried_actions == [] and node.children != []:
-# #                 node = node.select_child()
-# #                 state.do_action(node.action)
-# #
-# #             # Expansion
-# #             if node.untried_actions:
-# #                 action = random.choice(node.untried_actions)
-# #                 state.do_action(action)
-# #                 node = node.add_child(action, state)
-# #
-# #             # Simulation
-# #             while state.get_legal_actions():
-# #                 state.do_action(random.choice(state.get_legal_actions()))
-# #
-# #             # Backpropagation
-# #             while node is not None:
-# #                 node.update(state.get_result(node.parent.state.current_player))
-# #                 node = node.parent
-# #
-# #         return max(root_node.children, key=lambda c: c.visits).action
