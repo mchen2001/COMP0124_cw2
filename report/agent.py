@@ -4,6 +4,9 @@ import torch.optim as optim
 import numpy as np
 import random
 from collections import deque
+import torch.nn.functional as F
+from torch.distributions import Categorical
+
 from utils import *
 import os
 import math
@@ -248,7 +251,11 @@ class PPOAgent(Agent):
     def __init__(self, idx, tasks, input_size=3, output_size=3, hidden_size=32, learning_rate=1e-3):
         super(PPOAgent, self).__init__(idx, tasks)
         self.model = PPONetwork(input_size, hidden_size, output_size)
+        if os.path.exists(PPO_MODEL_PATH):
+            self.model.load_state_dict(torch.load(PPO_MODEL_PATH))
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
+        self.log_prob = None
+        self.value_est = None
 
         self.state = self.update_state()
 
@@ -268,7 +275,11 @@ class PPOAgent(Agent):
         """ Act based on the current state, choosing a task type and then a specific task. """
         self.update_state()
         policy, _ = self.model(self.state)
-        task_type_idx = torch.multinomial(policy, 1).item()  # Select task type based on policy
+        # task_type_idx = torch.multinomial(policy, 1).item()  # Select task type based on policy
+        dist = torch.distributions.Categorical(policy)
+        task_type_idx = dist.sample()
+        log_prob = dist.log_prob(task_type_idx)
+        self.log_prob = log_prob
         task_types = ['easy', 'medium', 'hard']
         selected_task_type = task_types[task_type_idx]
 
@@ -290,3 +301,4 @@ class PPOAgent(Agent):
             print_with_verbosity(f"PPO finds no available tasks to choose.", verbose)
 
         return chosen_task
+
