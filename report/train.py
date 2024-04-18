@@ -131,11 +131,10 @@ def train_step_dqn(agent, data):
 
     output = agent.model(states).squeeze(1)
     actions = actions.unsqueeze(-1)
-    Q_expected = output.gather(1, actions).squeeze(1)
     Q_targets_next = agent.model(next_states).detach().max(1)[0]
-    Q_targets = rewards.unsqueeze(1) + (agent.gamma * Q_targets_next * (1 - dones.unsqueeze(1)))
-    Q_targets_selected = Q_targets.gather(1, actions).squeeze(1)
-    loss = nn.MSELoss()(Q_expected, Q_targets_selected)
+    Q_expected = output.gather(1, actions).flatten()
+    Q_targets = rewards + (agent.gamma * Q_targets_next * (1 - dones))
+    loss = nn.MSELoss()(Q_expected, Q_targets)
 
     agent.optimizer.zero_grad()
     loss.backward()
