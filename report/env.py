@@ -37,7 +37,33 @@ class Env:
             else:
                 raise Exception("Unknown agent type")
 
+    def step(self, agent_actions):
+        task_agent = {}
+        for agent, task in agent_actions.items():
+            task_idx = task.idx
+            if task_idx not in task_agent:
+                task_agent[task_idx] = [agent]
+            else:
+                task_agent[task_idx].append(agent)
+        agent_reward = {agent.idx: agent.reward for agent in self.agents}  # Initialize rewards from current agent state
+        for idx, agents in task_agent.items():
+            task = self.game.get_task_by_idx(idx)
+            payoff = task.do_task()
+            if payoff == 0:
+                for agent in agents:
+                    print(f"Task {task.idx} not completed by agent {agent.idx}")
+            else:
+                # Randomly select an agent who attempted the task to receive the reward
+                agent = random.choice(agents)
+                agent.update_reward(payoff)
+                agent_reward[agent.idx] += payoff
+                print(f"Task {task.idx} completed by agent {agent.idx}, Reward: {payoff}")
+                task.done = True
+        self.game.update_tasks()
+        for agent in self.agents:
+            agent.update_tasks([task for task in self.game.get_game_tasks()])
 
+        return agent_reward
 
 
     def simulate_game(self):
