@@ -2,6 +2,7 @@ import random
 
 from game import *
 from agent import *
+from utils import *
 
 
 class Env:
@@ -66,8 +67,7 @@ class Env:
         done = not any(not task.is_completed() for task in self.game.get_game_tasks())
         return agent_reward, done
 
-
-    def simulate_game(self):
+    def simulate_game(self, verbose=True):
         self.reset()
         agent_types = ['Random', 'Adaptive', 'DQN', 'PPO']  # Adjust this list according to the order in `agent_list`
         print("Agents:", {idx: f"{type}" for idx, type in enumerate(agent_types)})
@@ -75,10 +75,12 @@ class Env:
         cumulative_rewards = {agent.idx: 0 for agent in self.agents}
 
         while any(not task.is_completed() for task in self.game.get_game_tasks()):
-            print(f"Tasks available: {[task.idx for task in self.game.get_game_tasks() if not task.is_completed()]}")
+            print_with_verbosity(
+                f"Tasks available: {[task.idx for task in self.game.get_game_tasks() if not task.is_completed()]}",
+                verbose)
             task_agent_map = {}
             for agent in self.agents:
-                task = agent.act()
+                task = agent.act(verbose)
                 if task:
                     if task.idx not in task_agent_map:
                         task_agent_map[task.idx] = []
@@ -92,13 +94,16 @@ class Env:
                     for agent in agents:
                         agent.update_reward(payoff)
                         cumulative_rewards[agent.idx] += payoff
-                        print(f"Task {task_idx} completed by {agent_types[agent.idx]}, Reward: {payoff}")
+                        print_with_verbosity(f"Task {task_idx} completed by {agent_types[agent.idx]}, Reward: {payoff}",
+                                             verbose)
                 else:
                     for agent in agents:
-                        print(f"Task {task_idx} not completed by {agent_types[agent.idx]}")
+                        print_with_verbosity(f"Task {task_idx} not completed by {agent_types[agent.idx]}",
+                                             verbose)
 
             rewards_by_name = {agent_types[agent.idx]: cumulative_rewards[agent.idx] for agent in self.agents}
-            print(f"Cumulative Rewards after this round: {rewards_by_name}")
+            print_with_verbosity(f"Cumulative Rewards after this round: {rewards_by_name}",
+                                 verbose)
             self.game.update_tasks()
             for agent in self.agents:
                 if hasattr(agent, 'update_tasks'):

@@ -4,8 +4,11 @@ import torch.optim as optim
 import numpy as np
 import random
 from collections import deque
+from utils import *
 import math
 
+DQN_MODEL_PATH = "./save_model/dqn"
+PPO_MODEL_PATH = "./save_model/ppo"
 
 class Agent:
     def __init__(self, idx, tasks):
@@ -23,7 +26,7 @@ class Agent:
     def update_reward(self, payoff):
         self.reward += payoff
 
-    def act(self):
+    def act(self, verbose=True):
         pass
 
     def get_tasks_by_types(self):
@@ -55,12 +58,12 @@ class RandomAgent(Agent):
     def __init__(self, idx, tasks):
         super().__init__(idx, tasks)
 
-    def act(self):
+    def act(self, verbose=True):
         # print(f"available task: {[t.idx for t in self.available_tasks]}")
         if not self.available_tasks:
             return None
         chosen_task = random.choice(list(self.available_tasks))
-        print(f"Random chooses task {chosen_task.idx}")
+        print_with_verbosity(f"Random chooses task {chosen_task.idx}", verbose)
         return chosen_task
 
 
@@ -73,7 +76,7 @@ class AdaptiveAgent(Agent):
         for agent in agents:
             self.other_agents_rewards[agent] = 0
 
-    def act(self):
+    def act(self, verbose=True):
         # print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
         if not self.available_tasks:
             return None
@@ -104,7 +107,7 @@ class AdaptiveAgent(Agent):
                 merged_tasks = easy_tasks + hard_tasks
                 chosen_task = random.choice(merged_tasks)
         # Do not remove the task here
-        print(f"Adaptive chooses task {chosen_task.idx}")
+        print_with_verbosity(f"Adaptive chooses task {chosen_task.idx}", verbose)
         return chosen_task
 
     def record_other_rewards(self, other_agent_reward_dict: dict):
@@ -150,7 +153,7 @@ class DQNAgent(Agent):
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
-    def act(self):
+    def act(self, verbose=True):
         # print(f"available task for agent {self.idx}: {[t.idx for t in self.available_tasks]}")
         if np.random.rand() >= self.epsilon:
             chosen_task = random.choice(list(self.available_tasks))
@@ -175,7 +178,7 @@ class DQNAgent(Agent):
                     break
 
         # self.available_tasks.remove(chosen_task)  # Ensure the chosen task is removed
-        print(f"DQN chooses task {chosen_task.idx}")
+        print_with_verbosity(f"DQN chooses task {chosen_task.idx}", verbose)
         return chosen_task
 
     def get_state(self):
@@ -253,7 +256,7 @@ class PPOAgent(Agent):
         state_vector = [task_counts['easy'], task_counts['medium'], task_counts['hard']]
         return torch.tensor(state_vector, dtype=torch.float32)
 
-    def act(self):
+    def act(self, verbose=True):
         """ Act based on the current state, choosing a task type and then a specific task. """
         self.update_state()
         policy, _ = self.model(self.state)
@@ -274,9 +277,9 @@ class PPOAgent(Agent):
                 chosen_task = None
         
         if chosen_task:
-            print(f"PPO chooses task {chosen_task.idx}")
+            print_with_verbosity(f"PPO chooses task {chosen_task.idx}", verbose)
         else:
-            print(f"PPO finds no available tasks to choose.")
+            print_with_verbosity(f"PPO finds no available tasks to choose.", verbose)
 
         return chosen_task
 

@@ -3,7 +3,7 @@ from env import Env
 
 def main():
     env = Env('hard', 1, ['random', 'adaptive', 'dqn', 'ppo'])
-    rewards, actions = env.simulate_game()
+    rewards, actions = env.simulate_game(verbose=False)
     print("All tasks completed!")
     print("Final Rewards:", rewards)
     # print("Actions:", actions)

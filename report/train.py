@@ -1,6 +1,6 @@
 import random
 
-from agent import DQNAgent, PPOAgent
+from agent import DQNAgent, PPOAgent, DQN_MODEL_PATH, PPO_MODEL_PATH
 from env import Env
 import matplotlib.pyplot as plt
 
@@ -93,10 +93,12 @@ def train_dqn(episodes, min_task_volume, max_task_volume):
 
             # Cumulative rewards (not shown in this snippet) can be tracked similarly to previous examples
 
+        torch.save(dqn_agent_1.model, DQN_MODEL_PATH)
         print(f"Episode {episode}: Completed with volumes set to {task_volume}.")
         ls_1.append(np.mean(losses_1))
         # ls_2.extend(losses_2)
     # print(ls_1)
+    # torch.save(dqn_agent_1.model, )
     plt.plot(ls_1)
     plt.show()
 
